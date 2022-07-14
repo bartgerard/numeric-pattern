@@ -34,6 +34,7 @@
     <properties>
         <java.version>17</java.version>
 
+        <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
         <gmavenplus-plugin.version>1.13.1</gmavenplus-plugin.version>
 
         <groovy4.version>4.0.3</groovy4.version>
