@@ -29,10 +29,6 @@ public record SortedSequence<T extends Number>(
         return new SortedSequence<>(sortedSequence);
     }
 
-    public T min() {
-        return sequence.get(0);
-    }
-
     public T max() {
         return sequence.get(sequence.size() - 1);
     }
@@ -79,6 +75,10 @@ public record SortedSequence<T extends Number>(
                         .sum()
                 )
                 .anyMatch(sum -> startOfRepetition + sum == number.longValue());
+    }
+
+    public T min() {
+        return sequence.get(0);
     }
 
 }

@@ -19,8 +19,8 @@ class NumericPatternSpecification extends Specification {
         NumericPattern<Integer> pattern2 = NumericPattern.sorted(sequence2)
 
         when:
-        boolean hasSameStartSequence = pattern1.hasSameStartSequenceAs(pattern2)
-        boolean hasSameEndSequence = pattern1.hasSameEndSequenceAs(pattern2)
+        boolean hasSameStartSequence = pattern1.startsWithSameSubsequence(pattern2)
+        boolean hasSameEndSequence = pattern1.endsWithSameSubsequence(pattern2)
 
         then:
         hasSameStartSequence == isSameStartSequence
@@ -50,7 +50,7 @@ class NumericPatternSpecification extends Specification {
         NumericPattern<Integer> pattern = NumericPattern.sorted(sequence)
 
         when:
-        final List<Pair<Integer, Integer>> gaps = pattern.findAllGaps();
+        List<Pair<Integer, Integer>> gaps = pattern.findAllGaps();
 
         then:
         assertThat(gaps).containsExactlyElementsOf(expectedGaps)
@@ -77,7 +77,7 @@ class NumericPatternSpecification extends Specification {
     def "find shortest repeating subsequence"() {
 
         when:
-        final List<Integer> shortestRepeatingSubsequence = NumericPattern.findShortestRepeatingSubsequence(sequence);
+        List<Integer> shortestRepeatingSubsequence = NumericPattern.findShortestRepeatingSubsequence(sequence);
 
         then:
         assertThat(shortestRepeatingSubsequence).containsExactlyElementsOf(expectedShortestRepeatingSubsequence)
@@ -161,6 +161,167 @@ class NumericPatternSpecification extends Specification {
         [1, 2, 4, 5] | -1     | true     | ""
 
         [1, 2, 4, 7] | -1     | false    | ""
+
+    }
+
+    def "find all possible subsequences"() {
+
+        given:
+        NumericPattern<Integer> pattern = NumericPattern.unsorted(sequence)
+
+        when:
+        Set<List<Integer>> allPossibleSubsequences = pattern.findAllPossibleSubsequences();
+
+        then:
+        assertThat(allPossibleSubsequences).containsExactlyInAnyOrderElementsOf(expectedSubsequences)
+
+        where:
+        sequence  | expectedSubsequences                  | comment
+        []        | []                                    | ""
+        [1]       | [[1]]                                 | ""
+        [1, 2]    | [[1], [2], [1, 2]]                    | ""
+        [1, 2, 1] | [[1], [2], [1, 2], [2, 1], [1, 2, 1]] | ""
+
+    }
+
+    def "find all partial fits"() {
+
+        when:
+        Set<Fit<Integer>> partialFits = NumericPattern.findAllPartialFits(sequence);
+
+        then:
+        assertThat(partialFits).containsExactlyInAnyOrderElementsOf(expectedPartialFits)
+
+        where:
+        sequence     | expectedPartialFits                                                                  | comment
+        []           | []                                                                                   | ""
+        [1]          | []                                                                                   | ""
+        [1, 1]       | [Fit.of([1, 1], [1])]                                                                | ""
+        [1, 1, 1]    | [Fit.of([1, 1, 1], [1]), Fit.of([1, 1], [1])]                                        | ""
+        [1, 2]       | []                                                                                   | ""
+        [1, 2, 1]    | [Fit.of([1, 2, 1], [1, 2])]                                                          | ""
+        [1, 2, 1, 2] | [Fit.of([1, 2, 1, 2], [1, 2]), Fit.of([1, 2, 1], [1, 2]), Fit.of([2, 1, 2], [2, 1])] | ""
+
+    }
+
+    def "filter repeating subsequences"() {
+
+        when:
+        Set<List<Number>> nonRepeatedSequences = NumericPattern.filterRepeatedSubsequences(new HashSet<List<Integer>>(sequences));
+
+        then:
+        assertThat(nonRepeatedSequences).containsExactlyInAnyOrderElementsOf(expectedNonRepeatedSequences)
+
+        where:
+        sequences                   | expectedNonRepeatedSequences | comment
+        []                          | []                           | ""
+        [[1]]                       | [[1]]                        | ""
+        [[1, 1]]                    | [[1, 1]]                     | ""
+        [[1, 2]]                    | [[1, 2]]                     | ""
+
+        [[1], [1, 1]]               | [[1, 1]]                     | ""
+        [[1], [1, 2]]               | [[1, 2]]                     | ""
+
+        [[3], [1, 1]]               | [[1, 1], [3]]                | ""
+        [[3], [1, 2]]               | [[1, 2], [3]]                | ""
+
+        [[1, 2, 1], [1, 2]]         | [[1, 2, 1]]                  | ""
+        [[1, 2, 1], [2, 1]]         | [[1, 2, 1]]                  | ""
+        [[1, 2, 1], [1, 2], [2, 1]] | [[1, 2, 1]]                  | ""
+
+    }
+
+    def "find all non repeatable partial fits"() {
+
+        when:
+        Set<Fit<Integer>> partialFits = NumericPattern.findAllNonRepeatablePartialFits(sequence);
+
+        then:
+        assertThat(partialFits).containsExactlyInAnyOrderElementsOf(expectedPartialFits)
+
+        where:
+        sequence                 | expectedPartialFits                                          | comment
+        []                       | []                                                           | ""
+        [1]                      | []                                                           | ""
+        [1, 1]                   | [Fit.of([1, 1], [1])]                                        | ""
+        [1, 1, 1]                | [Fit.of([1, 1, 1], [1])]                                     | ""
+        [1, 2]                   | []                                                           | ""
+        [1, 2, 1]                | [Fit.of([1, 2, 1], [1, 2])]                                  | ""
+        [1, 2, 1, 2]             | [Fit.of([1, 2, 1, 2], [1, 2])]                               | ""
+
+        [1, 2, 1, 2, 1, 3]       | [Fit.of([1, 2, 1, 2, 1], [1, 2])]                            | ""
+        [1, 2, 1, 2, 1, 3, 4]    | [Fit.of([1, 2, 1, 2, 1], [1, 2])]                            | ""
+        [1, 2, 1, 2, 1, 3, 4, 3] | [Fit.of([1, 2, 1, 2, 1], [1, 2]), Fit.of([3, 4, 3], [3, 4])] | ""
+
+    }
+
+    def "find all variations"() {
+
+        when:
+        Set<List<Integer>> variations = NumericPattern.findAllVariations(sequence);
+
+        then:
+        assertThat(variations).containsExactlyInAnyOrderElementsOf(expectedVariations)
+
+        where:
+        sequence  | expectedVariations                | comment
+        []        | []                                | ""
+        [1]       | [[1]]                             | ""
+        [1, 1]    | [[1, 1]]                          | ""
+        [1, 2]    | [[1, 2], [2, 1]]                  | ""
+        [1, 2, 1] | [[1, 2, 1], [2, 1, 1], [1, 1, 2]] | ""
+        [1, 2, 3] | [[1, 2, 3], [2, 3, 1], [3, 1, 2]] | ""
+
+    }
+
+    def "find base variation"() {
+
+        when:
+        List<Integer> baseVariation = NumericPattern.findBaseVariation(sequence);
+
+        then:
+        assertThat(baseVariation).containsExactlyInAnyOrderElementsOf(expectedBaseVariation)
+
+        where:
+        sequence  | expectedBaseVariation | comment
+        []        | []                    | ""
+        [1]       | [1]                   | ""
+        [1, 1]    | [1, 1]                | ""
+        [1, 2]    | [1, 2]                | ""
+        [1, 2, 1] | [1, 1, 2]             | ""
+        [1, 2, 3] | [1, 2, 3]             | ""
+        [2, 3, 1] | [1, 2, 3]             | ""
+        [3, 1, 2] | [1, 2, 3]             | ""
+
+    }
+
+    def "find all best partial fits"() {
+
+        when:
+        Set<List<Integer>> partialFits = NumericPattern.findAllBestFittingSubsequences(sequence);
+
+        then:
+        assertThat(partialFits).containsExactlyInAnyOrderElementsOf(expectedPartialFits)
+
+        where:
+        sequence                                | expectedPartialFits | comment
+        []                                      | []                  | ""
+        [1]                                     | []                  | ""
+        [1, 1]                                  | [[1]]               | ""
+        [1, 1, 1]                               | [[1]]               | ""
+        [1, 2]                                  | []                  | ""
+        [1, 2, 1]                               | [[1, 2]]            | ""
+        [1, 2, 1, 2]                            | [[1, 2]]            | ""
+
+        [1, 2, 1, 2, 1, 3]                      | [[1, 2]]            | ""
+        [1, 2, 1, 2, 1, 3, 4]                   | [[1, 2]]            | ""
+        [1, 2, 1, 2, 1, 3, 4, 3]                | [[1, 2]]            | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4]             | [[1, 2]]            | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3]          | [[1, 2], [3, 4]]    | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 4]       | [[3, 4]]            | ""
+
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 1, 2]    | [[1, 2], [3, 4]]    | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 1, 2, 1] | [[1, 2], [3, 4]]    | ""
 
     }
 
