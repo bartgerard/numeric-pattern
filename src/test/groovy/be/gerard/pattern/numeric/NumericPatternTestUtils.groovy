@@ -1,6 +1,5 @@
 package be.gerard.pattern.numeric
 
-
 import org.apache.commons.lang3.tuple.ImmutablePair
 import org.apache.commons.lang3.tuple.Pair
 
@@ -24,6 +23,25 @@ class NumericPatternTestUtils {
         notNull(right)
 
         return ImmutablePair.of(left, right)
+    }
+
+    static <T extends Number> NumericRange<T> range1(
+            final T start
+    ) {
+        return NumericRange.of(
+                start,
+                start
+        )
+    }
+
+    static <T extends Number> NumericRange<T> range(
+            final T start,
+            final T end
+    ) {
+        return NumericRange.of(
+                start,
+                end
+        )
     }
 
 }

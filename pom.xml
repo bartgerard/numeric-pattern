@@ -10,11 +10,11 @@
     </parent>
 
     <groupId>be.gerard.pattern</groupId>
-    <artifactId>numeric-pattern</artifactId>
+    <artifactId>numeric-patterns</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
-    <name>numeric-pattern</name>
-    <description>numeric-pattern</description>
+    <name>numeric-patterns</name>
+    <description>numeric-patterns</description>
 
     <developers>
         <developer>

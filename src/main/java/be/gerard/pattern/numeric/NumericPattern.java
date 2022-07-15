@@ -11,12 +11,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+import static java.util.Collections.emptySet;
 import static java.util.Collections.indexOfSubList;
+import static java.util.Collections.singleton;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 public interface NumericPattern<T extends Number> {
@@ -104,6 +110,69 @@ public interface NumericPattern<T extends Number> {
                 .findFirst()
                 .map(Map.Entry::getValue)
                 .orElseGet(Collections::emptySet);
+    }
+
+    static <T extends Number> Set<NumericRange<Integer>> split(
+            final List<T> sequence
+    ) {
+        if (sequence.isEmpty()) {
+            return emptySet();
+        }
+
+        final Set<List<T>> allBestFittingSubsequences = findAllBestFittingSubsequences(sequence);
+
+        if (allBestFittingSubsequences.isEmpty()) {
+            return singleton(NumericRange.of(0, sequence.size() - 1));
+        }
+
+        final Map<List<T>, Set<Integer>> indicesByBestFittingSequence = allBestFittingSubsequences.stream()
+                .collect(toUnmodifiableMap(
+                        Function.identity(),
+                        bestFit -> {
+                            final Set<List<T>> allVariations = findAllVariations(bestFit);
+
+                            return IntStream.rangeClosed(0, sequence.size() - bestFit.size())
+                                    .filter(i -> allVariations.contains(sequence.subList(i, i + bestFit.size())))
+                                    .flatMap(i -> IntStream.range(i, i + bestFit.size()))
+                                    .boxed()
+                                    .collect(toUnmodifiableSet());
+                        }
+                ));
+
+        final Set<Integer> allHandledIndices = indicesByBestFittingSequence.values()
+                .stream()
+                .flatMap(Set::stream)
+                .collect(toUnmodifiableSet());
+
+        final List<NumericRange<Integer>> unhandledRanges = IntStream.range(0, sequence.size())
+                .boxed()
+                .filter(not(allHandledIndices::contains))
+                .collect(collectingAndThen(
+                        toUnmodifiableSet(),
+                        NumericRange::groupSubsequentNumbers
+                ));
+
+        final List<NumericRange<Integer>> sets = unhandledRanges.stream()
+                .flatMap(range -> split(sequence.subList(range.start(), range.end() + 1))
+                        .stream()
+                        .map(refinedSplit -> NumericRange.of(
+                                range.start() + refinedSplit.start(),
+                                range.start() + refinedSplit.end()
+                        ))
+                )
+                .toList();
+
+        final List<NumericRange<Integer>> handled = indicesByBestFittingSequence.values()
+                .stream()
+                .map(NumericRange::groupSubsequentNumbers)
+                .flatMap(List::stream)
+                .toList();
+
+        return Stream.concat(
+                        handled.stream(),
+                        sets.stream()
+                )
+                .collect(toUnmodifiableSet());
     }
 
     static <T extends Number> Set<List<T>> filterRepeatedSubsequences(

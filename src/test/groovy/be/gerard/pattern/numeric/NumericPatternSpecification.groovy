@@ -1,12 +1,13 @@
 package be.gerard.pattern.numeric
 
-
 import org.apache.commons.lang3.tuple.Pair
 import spock.lang.Specification
 import spock.lang.Title
 
 import static NumericPatternTestUtils.pair
 import static NumericPatternTestUtils.toLongValues
+import static be.gerard.pattern.numeric.NumericPatternTestUtils.range
+import static be.gerard.pattern.numeric.NumericPatternTestUtils.range1
 import static org.assertj.core.api.Assertions.assertThat
 
 @Title("NumericPattern Tests")
@@ -304,24 +305,64 @@ class NumericPatternSpecification extends Specification {
         assertThat(partialFits).containsExactlyInAnyOrderElementsOf(expectedPartialFits)
 
         where:
-        sequence                                | expectedPartialFits | comment
-        []                                      | []                  | ""
-        [1]                                     | []                  | ""
-        [1, 1]                                  | [[1]]               | ""
-        [1, 1, 1]                               | [[1]]               | ""
-        [1, 2]                                  | []                  | ""
-        [1, 2, 1]                               | [[1, 2]]            | ""
-        [1, 2, 1, 2]                            | [[1, 2]]            | ""
+        sequence                                                                 | expectedPartialFits            | comment
+        []                                                                       | []                             | ""
+        [1]                                                                      | []                             | ""
+        [1, 1]                                                                   | [[1]]                          | ""
+        [1, 1, 1]                                                                | [[1]]                          | ""
+        [1, 2]                                                                   | []                             | ""
+        [1, 2, 1]                                                                | [[1, 2]]                       | ""
+        [1, 2, 1, 2]                                                             | [[1, 2]]                       | ""
 
-        [1, 2, 1, 2, 1, 3]                      | [[1, 2]]            | ""
-        [1, 2, 1, 2, 1, 3, 4]                   | [[1, 2]]            | ""
-        [1, 2, 1, 2, 1, 3, 4, 3]                | [[1, 2]]            | ""
-        [1, 2, 1, 2, 1, 3, 4, 3, 4]             | [[1, 2]]            | ""
-        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3]          | [[1, 2], [3, 4]]    | ""
-        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 4]       | [[3, 4]]            | ""
+        [1, 2, 1, 2, 1, 3]                                                       | [[1, 2]]                       | ""
+        [1, 2, 1, 2, 1, 3, 4]                                                    | [[1, 2]]                       | ""
+        [1, 2, 1, 2, 1, 3, 4, 3]                                                 | [[1, 2]]                       | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4]                                              | [[1, 2]]                       | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3]                                           | [[1, 2], [3, 4]]               | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 4]                                        | [[3, 4]]                       | ""
 
-        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 1, 2]    | [[1, 2], [3, 4]]    | ""
-        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 1, 2, 1] | [[1, 2], [3, 4]]    | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 1, 2]                                     | [[1, 2], [3, 4]]               | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 1, 2, 1]                                  | [[1, 2], [3, 4]]               | ""
+
+        [1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2]                                     | [[1, 2]]                       | ""
+        [1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2]                   | [[1, 2], [1, 1, 2], [1, 2, 2]] | "accidentally there is a third pattern [1, 2] with the same compression factor"
+        [1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2] | [[1, 1, 2], [1, 2, 2]]         | ""
+        [1, 2, 1, 1, 2, 1, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 2, 1, 2]                | [[1, 1, 2], [1, 2, 2]]         | ""
+
+    }
+
+    def "find all best partial fits2"() {
+
+        when:
+        Set<NumericRange<Integer>> split = NumericPattern.split(sequence);
+
+        then:
+        assertThat(split).containsExactlyInAnyOrderElementsOf(expectedSplit)
+
+        where:
+        sequence                                                                 | expectedSplit                             | comment
+        []                                                                       | []                                        | ""
+        [1]                                                                      | [range1(0)]                               | ""
+        [1, 1]                                                                   | [range(0, 1)]                             | ""
+        [1, 1, 1]                                                                | [range(0, 2)]                             | ""
+        [1, 2]                                                                   | [range(0, 1)]                             | ""
+        [1, 2, 1]                                                                | [range(0, 2)]                             | ""
+        [1, 2, 1, 2]                                                             | [range(0, 3)]                             | ""
+
+        [1, 2, 1, 2, 1, 3]                                                       | [range(0, 4), range1(5)]                  | ""
+        [1, 2, 1, 2, 1, 3, 4]                                                    | [range(0, 4), range(5, 6)]                | ""
+        [1, 2, 1, 2, 1, 3, 4, 3]                                                 | [range(0, 4), range(5, 7)]                | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4]                                              | [range(0, 4), range(5, 8)]                | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3]                                           | [range(0, 4), range(5, 9)]                | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 4]                                        | [range(0, 4), range(5, 10)]               | ""
+
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 1, 2]                                     | [range(0, 4), range(5, 9), range(10, 11)] | ""
+        [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 1, 2, 1]                                  | [range(0, 4), range(5, 9), range(10, 12)] | ""
+
+        [1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2]                                     | [range(0, 11)]                            | ""
+        [1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2]                   | [range(0, 8), range(9, 17)]               | "accidentally there is a third pattern [1, 2] with the same compression factor"
+        [1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2] | [range(0, 11), range(12, 23)]             | ""
+        [1, 2, 1, 1, 2, 1, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 2, 1, 2]                | [range(0, 8), range1(9), range(10, 18)]   | ""
 
     }
 
