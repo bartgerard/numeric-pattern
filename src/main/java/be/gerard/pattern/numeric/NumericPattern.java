@@ -112,7 +112,7 @@ public interface NumericPattern<T extends Number> {
                 .orElseGet(Collections::emptySet);
     }
 
-    static <T extends Number> Set<NumericRange<Integer>> split(
+    static <T extends Number> Set<NumericRange<Integer>> splitByMostLikelyPattern(
             final List<T> sequence
     ) {
         if (sequence.isEmpty()) {
@@ -153,7 +153,7 @@ public interface NumericPattern<T extends Number> {
                 ));
 
         final List<NumericRange<Integer>> sets = unhandledRanges.stream()
-                .flatMap(range -> split(sequence.subList(range.start(), range.end() + 1))
+                .flatMap(range -> splitByMostLikelyPattern(sequence.subList(range.start(), range.end() + 1))
                         .stream()
                         .map(refinedSplit -> NumericRange.of(
                                 range.start() + refinedSplit.start(),

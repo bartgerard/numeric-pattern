@@ -331,10 +331,10 @@ class NumericPatternSpecification extends Specification {
 
     }
 
-    def "find all best partial fits2"() {
+    def "split by most likely pattern"() {
 
         when:
-        Set<NumericRange<Integer>> split = NumericPattern.split(sequence);
+        Set<NumericRange<Integer>> split = NumericPattern.splitByMostLikelyPattern(sequence);
 
         then:
         assertThat(split).containsExactlyInAnyOrderElementsOf(expectedSplit)
