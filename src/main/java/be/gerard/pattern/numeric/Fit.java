@@ -21,13 +21,6 @@ public record Fit<T extends Number>(
         );
     }
 
-    /**
-     * @return A compression factor of 2, means that the sequence requires repeating the subsequence twice.
-     */
-    double compressionFactor() {
-        return (double) sequence.size() / subsequence.size();
-    }
-
     public static <T extends Number> Fit<T> of(
             final List<T> sequence,
             final List<T> subsequence
@@ -36,6 +29,13 @@ public record Fit<T extends Number>(
                 sequence,
                 subsequence
         );
+    }
+
+    /**
+     * @return A compression factor of 2, means that the sequence requires repeating the subsequence twice.
+     */
+    double compressionFactor() {
+        return (double) sequence.size() / subsequence.size();
     }
 
     boolean isPartialFit() {

@@ -3,26 +3,31 @@ package be.gerard.pattern.numeric;
 import be.gerard.pattern.numeric.internal.EmptySequence;
 import be.gerard.pattern.numeric.internal.SortedSequence;
 import be.gerard.pattern.numeric.internal.UnsortedSequence;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptySet;
 import static java.util.Collections.indexOfSubList;
 import static java.util.Collections.singleton;
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.comparingInt;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toUnmodifiableMap;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 public interface NumericPattern<T extends Number> {
@@ -125,34 +130,41 @@ public interface NumericPattern<T extends Number> {
             return singleton(NumericRange.of(0, sequence.size() - 1));
         }
 
-        final Map<List<T>, Set<Integer>> indicesByBestFittingSequence = allBestFittingSubsequences.stream()
-                .collect(toUnmodifiableMap(
-                        Function.identity(),
-                        bestFit -> {
-                            final Set<List<T>> allVariations = findAllVariations(bestFit);
+        final List<? extends Pair<List<T>, List<Integer>>> bestFittingPairs = findAllFittingRepeatableSubsequencesWithTheirRepetitions(
+                sequence,
+                allBestFittingSubsequences
+        );
 
-                            return IntStream.rangeClosed(0, sequence.size() - bestFit.size())
-                                    .filter(i -> allVariations.contains(sequence.subList(i, i + bestFit.size())))
-                                    .flatMap(i -> IntStream.range(i, i + bestFit.size()))
-                                    .boxed()
-                                    .collect(toUnmodifiableSet());
-                        }
-                ));
-
-        final Set<Integer> allHandledIndices = indicesByBestFittingSequence.values()
-                .stream()
-                .flatMap(Set::stream)
-                .collect(toUnmodifiableSet());
-
-        final List<NumericRange<Integer>> unhandledRanges = IntStream.range(0, sequence.size())
+        final List<NumericRange<Integer>> ranges = new ArrayList<>();
+        final List<? extends Pair<List<T>, List<Integer>>> remainingPairs = new ArrayList<>(bestFittingPairs);
+        final List<Integer> remainingIndices = IntStream.range(0, sequence.size())
                 .boxed()
-                .filter(not(allHandledIndices::contains))
-                .collect(collectingAndThen(
-                        toUnmodifiableSet(),
-                        NumericRange::groupSubsequentNumbers
-                ));
+                .collect(toList());
 
-        final List<NumericRange<Integer>> sets = unhandledRanges.stream()
+        while (!remainingPairs.isEmpty()) {
+            final Pair<List<T>, List<Integer>> pair = Collections.max(
+                    remainingPairs,
+                    comparing(remainingPair -> remainingPair.getRight()
+                            .stream()
+                            .filter(remainingIndices::contains)
+                            .count()
+                    )
+            );
+            remainingPairs.remove(pair);
+
+            final List<Integer> matchingIndices = pair.getRight()
+                    .stream()
+                    .filter(remainingIndices::contains)
+                    .toList();
+
+            remainingIndices.removeAll(matchingIndices);
+
+            ranges.addAll(NumericRange.groupSubsequentNumbers(matchingIndices));
+        }
+
+        final List<NumericRange<Integer>> unhandledRanges = NumericRange.groupSubsequentNumbers(remainingIndices);
+
+        final List<NumericRange<Integer>> additionalRanges = unhandledRanges.stream()
                 .flatMap(range -> splitByMostLikelyPattern(sequence.subList(range.start(), range.end() + 1))
                         .stream()
                         .map(refinedSplit -> NumericRange.of(
@@ -162,17 +174,60 @@ public interface NumericPattern<T extends Number> {
                 )
                 .toList();
 
-        final List<NumericRange<Integer>> handled = indicesByBestFittingSequence.values()
-                .stream()
-                .map(NumericRange::groupSubsequentNumbers)
-                .flatMap(List::stream)
-                .toList();
-
         return Stream.concat(
-                        handled.stream(),
-                        sets.stream()
+                        ranges.stream(),
+                        additionalRanges.stream()
                 )
                 .collect(toUnmodifiableSet());
+    }
+
+    static <T extends Number> Optional<? extends Pair<List<T>, List<Integer>>> findTheRepeatableSubsequenceWithTheLongestFittingRepetitionStartingFromLeft(
+            final List<T> sequence,
+            final Collection<List<T>> possibleRepeatableSubsequences
+    ) {
+        return possibleRepeatableSubsequences.stream()
+                .flatMap(repeatableSubSequence -> IntStream.range(0, repeatableSubSequence.size())
+                        .mapToObj(shift -> IntStream.range(0, sequence.size())
+                                .takeWhile(index -> Objects.equals(sequence.get(index), repeatableSubSequence.get((index + shift) % repeatableSubSequence.size())))
+                                .boxed()
+                                .toList()
+                        )
+                        .filter(not(List::isEmpty))
+                        .max(comparingInt(List::size))
+                        .map(longestFittingSequence -> ImmutablePair.of(repeatableSubSequence, longestFittingSequence))
+                        .stream()
+                )
+                .max(Comparator.<Pair<List<T>, List<Integer>>, List<Integer>>comparing(Pair::getRight, comparingInt(List::size))
+                        .thenComparing(Pair::getLeft, comparingInt(List::size))
+                );
+    }
+
+    static <T extends Number> List<? extends Pair<List<T>, List<Integer>>> findAllFittingRepeatableSubsequencesWithTheirRepetitions(
+            final List<T> sequence,
+            final Collection<List<T>> possibleRepeatableSubsequences
+    ) {
+        final List<? extends Pair<List<T>, List<Integer>>> longestFittingPairsForAllSubsequences = IntStream.range(0, sequence.size())
+                .mapToObj(fromIndex -> {
+                    final List<T> subsequence = sequence.subList(fromIndex, sequence.size());
+
+                    return findTheRepeatableSubsequenceWithTheLongestFittingRepetitionStartingFromLeft(subsequence, possibleRepeatableSubsequences)
+                            .map(fit -> ImmutablePair.of(
+                                    fit.getLeft(),
+                                    fit.getRight()
+                                            .stream()
+                                            .map(i -> fromIndex + i)
+                                            .toList()
+                            ));
+                })
+                .flatMap(Optional::stream)
+                .toList();
+
+        return longestFittingPairsForAllSubsequences.stream()
+                .filter(pair1 -> longestFittingPairsForAllSubsequences.stream()
+                        .filter(pair2 -> pair1.getRight().size() < pair2.getRight().size())
+                        .noneMatch(pair2 -> indexOfSubList(pair2.getRight(), pair1.getRight()) > 0)
+                )
+                .toList();
     }
 
     static <T extends Number> Set<List<T>> filterRepeatedSubsequences(

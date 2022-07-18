@@ -331,6 +331,63 @@ class NumericPatternSpecification extends Specification {
 
     }
 
+    def "find the repeatable subsequence with the longest fitting repetition"() {
+
+        when:
+        Optional<? extends Pair<List<Integer>, List<Integer>>> result = NumericPattern.findTheRepeatableSubsequenceWithTheLongestFittingRepetitionStartingFromLeft(
+                sequence,
+                repeatableSubsequences
+        );
+
+        then:
+        assertThat(result).isEqualTo(expectedResult)
+
+        where:
+        sequence           | repeatableSubsequences | expectedResult                                      | comment
+        []                 | []                     | Optional.empty()                                    | ""
+        [1]                | [[1]]                  | Optional.of(Pair.of([1], [0]))                      | ""
+        [1, 1]             | [[1]]                  | Optional.of(Pair.of([1], [0, 1]))                   | ""
+        [1, 1, 1]          | [[1]]                  | Optional.of(Pair.of([1], [0, 1, 2]))                | ""
+
+        [1, 2]             | [[1, 2, 1], [1, 2]]    | Optional.of(Pair.of([1, 2, 1], [0, 1]))             | ""
+        [1, 2, 1]          | [[1, 2, 1], [1, 2]]    | Optional.of(Pair.of([1, 2, 1], [0, 1, 2]))          | ""
+        [1, 2, 1]          | [[1, 2], [1, 2, 1]]    | Optional.of(Pair.of([1, 2, 1], [0, 1, 2]))          | ""
+
+        [1, 2, 1]          | [[1, 1, 2]]            | Optional.of(Pair.of([1, 1, 2], [0, 1, 2]))          | ""
+        [1, 2, 1, 1, 2, 1] | [[1, 1, 2]]            | Optional.of(Pair.of([1, 1, 2], [0, 1, 2, 3, 4, 5])) | ""
+
+    }
+
+    def "find all fitting repeatable subsequences with their repetitions"() {
+
+        when:
+        List<? extends Pair<List<Integer>, List<Integer>>> result = NumericPattern.findAllFittingRepeatableSubsequencesWithTheirRepetitions(
+                sequence,
+                repeatableSubsequences
+        );
+
+        then:
+        assertThat(result).isEqualTo(expectedResult)
+
+        where:
+        sequence                             | repeatableSubsequences | expectedResult                                                                           | comment
+        []                                   | []                     | []                                                                                       | ""
+        [1]                                  | [[1]]                  | [Pair.of([1], [0])]                                                                      | ""
+        [1, 1]                               | [[1]]                  | [Pair.of([1], [0, 1])]                                                                   | ""
+        [1, 1, 1]                            | [[1]]                  | [Pair.of([1], [0, 1, 2])]                                                                | ""
+
+        [1, 2]                               | [[1, 2, 1], [1, 2]]    | [Pair.of([1, 2, 1], [0, 1])]                                                             | ""
+        [1, 2, 1]                            | [[1, 2, 1], [1, 2]]    | [Pair.of([1, 2, 1], [0, 1, 2])]                                                          | ""
+        [1, 2, 1]                            | [[1, 2], [1, 2, 1]]    | [Pair.of([1, 2, 1], [0, 1, 2])]                                                          | ""
+
+        [1, 2, 1]                            | [[1, 1, 2]]            | [Pair.of([1, 1, 2], [0, 1, 2])]                                                          | ""
+        [1, 2, 1, 1, 2, 1]                   | [[1, 1, 2]]            | [Pair.of([1, 1, 2], [0, 1, 2, 3, 4, 5])]                                                 | ""
+
+        [1, 2, 1, 1, 2, 1, 2, 2, 1]          | [[1, 1, 2], [1, 2, 2]] | [Pair.of([1, 1, 2], [0, 1, 2, 3, 4, 5]), Pair.of([1, 2, 2], [4, 5, 6, 7, 8])]            | ""
+        [1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 2, 1] | [[1, 1, 2], [1, 2, 2]] | [Pair.of([1, 1, 2], [0, 1, 2, 3, 4, 5]), Pair.of([1, 2, 2], [4, 5, 6, 7, 8, 9, 10, 11])] | ""
+
+    }
+
     def "split by most likely pattern"() {
 
         when:
@@ -359,8 +416,8 @@ class NumericPatternSpecification extends Specification {
         [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 1, 2]                                     | [range(0, 4), range(5, 9), range(10, 11)] | ""
         [1, 2, 1, 2, 1, 3, 4, 3, 4, 3, 1, 2, 1]                                  | [range(0, 4), range(5, 9), range(10, 12)] | ""
 
-        [1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2]                                     | [range(0, 11)]                            | ""
-        [1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2]                   | [range(0, 8), range(9, 17)]               | "accidentally there is a third pattern [1, 2] with the same compression factor"
+        [1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2]                                     | [range(0, 2), range(3, 8), range(9, 11)]  | "accidentally there is a third pattern [1, 2] with a better compression factor"
+        [1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2]                   | [range(0, 8), range(9, 17)]               | ""
         [1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2] | [range(0, 11), range(12, 23)]             | ""
         [1, 2, 1, 1, 2, 1, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 2, 1, 2]                | [range(0, 8), range1(9), range(10, 18)]   | ""
 

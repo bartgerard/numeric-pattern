@@ -10,12 +10,12 @@ import static java.util.Collections.emptyList;
 public record EmptySequence<T extends Number>() implements SortedNumericPattern<T> {
 
     @Override
-    public List<? extends Pair<T, T>> findAllGaps() {
+    public List<T> sequence() {
         return emptyList();
     }
 
     @Override
-    public List<T> sequence() {
+    public List<? extends Pair<T, T>> findAllGaps() {
         return emptyList();
     }
 
