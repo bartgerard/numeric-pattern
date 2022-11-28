@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.5</version>
+        <version>3.0.0</version>
     </parent>
 
     <groupId>be.gerard.pattern</groupId>
@@ -27,7 +27,7 @@
         <repository>
             <id>github</id>
             <name>GitHub OWNER Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/bartgerard/time</url>
+            <url>https://maven.pkg.github.com/bartgerard/numeric-patterns</url>
         </repository>
     </distributionManagement>
 
