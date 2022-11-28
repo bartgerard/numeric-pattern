@@ -2,7 +2,6 @@ package be.gerard.pattern.numeric.internal;
 
 import be.gerard.pattern.numeric.UnsortedNumericPattern;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -17,7 +16,7 @@ public record UnsortedSequence<T extends Number>(
     ) {
         notEmpty(sequence);
 
-        return new SortedSequence<>(new ArrayList<>(sequence));
+        return new SortedSequence<>(List.copyOf(sequence));
     }
 
 }

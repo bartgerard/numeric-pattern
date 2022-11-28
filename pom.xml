@@ -10,11 +10,11 @@
     </parent>
 
     <groupId>be.gerard.pattern</groupId>
-    <artifactId>numeric-patterns</artifactId>
+    <artifactId>numeric</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
-    <name>numeric-patterns</name>
-    <description>numeric-patterns</description>
+    <name>numeric-pattern</name>
+    <description>numeric-pattern</description>
 
     <developers>
         <developer>
@@ -27,7 +27,7 @@
         <repository>
             <id>github</id>
             <name>GitHub OWNER Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/bartgerard/numeric-patterns</url>
+            <url>https://maven.pkg.github.com/bartgerard/numeric-pattern</url>
         </repository>
     </distributionManagement>
 
