@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.0.0</version>
+        <version>3.0.1</version>
     </parent>
 
     <groupId>be.gerard.pattern</groupId>
@@ -37,7 +37,7 @@
         <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
         <gmavenplus-plugin.version>2.1.0</gmavenplus-plugin.version>
 
-        <groovy4.version>4.0.6</groovy4.version>
+        <groovy4.version>4.0.7</groovy4.version>
         <spock.version>2.3-groovy-4.0</spock.version>
     </properties>
 
@@ -69,22 +69,27 @@
 
     <dependencies>
 
+        <!-- utilities -->
+        <!-- apache -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
 
         <!-- testing -->
+        <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- groovy -->
         <dependency>
             <groupId>org.apache.groovy</groupId>
             <artifactId>groovy</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- spock -->
         <dependency>
             <groupId>org.spockframework</groupId>
             <artifactId>spock-core</artifactId>
