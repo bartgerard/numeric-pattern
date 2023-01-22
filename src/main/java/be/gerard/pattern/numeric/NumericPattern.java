@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.indexOfSubList;
 import static java.util.Collections.singleton;
@@ -56,22 +57,22 @@ public interface NumericPattern<T extends Number> {
         return UnsortedSequence.of(sequence);
     }
 
-    static <T extends Number> Set<Fit<T>> findAllPartialFits(
-            final List<T> sequence
+    static <T extends Number> Set<Fit.Sequential<T>> findAllPartialFits(
+            @Unsorted final List<T> sequence
     ) {
         final Set<List<T>> allPossibleSubsequences = findAllPossibleSubsequences(sequence);
 
         return allPossibleSubsequences.stream()
-                .map(subsequence -> Fit.of(
+                .map(subsequence -> Fit.sequential(
                         subsequence,
                         findShortestRepeatingSubsequence(subsequence)
                 ))
-                .filter(Fit::isPartialFit)
+                .filter(Fit.Sequential::isPartialFit)
                 .collect(toUnmodifiableSet());
     }
 
-    static <T extends Number> Set<Fit<T>> findAllNonRepeatablePartialFits(
-            final List<T> sequence
+    static <T extends Number> Set<Fit.Sequential<T>> findAllNonRepeatablePartialFits(
+            @Unsorted final List<T> sequence
     ) {
         final Set<List<T>> allPossibleSubsequences = findAllPossibleSubsequences(sequence);
 
@@ -88,24 +89,24 @@ public interface NumericPattern<T extends Number> {
                 .stream()
                 .flatMap(entry -> entry.getValue()
                         .stream()
-                        .map(longestSequence -> Fit.of(
+                        .map(longestSequence -> Fit.sequential(
                                 longestSequence,
                                 entry.getKey()
                         ))
                 )
-                .filter(Fit::isPartialFit)
+                .filter(Fit.Sequential::isPartialFit)
                 .collect(toUnmodifiableSet());
     }
 
     static <T extends Number> Set<List<T>> findAllBestFittingSubsequences(
-            final List<T> sequence
+            @Unsorted final List<T> sequence
     ) {
-        final Set<Fit<T>> allNonRepeatablePartialFits = findAllNonRepeatablePartialFits(sequence);
+        final Set<Fit.Sequential<T>> allNonRepeatablePartialFits = findAllNonRepeatablePartialFits(sequence);
 
         final Map<Double, Set<List<T>>> subsequencesByScore = allNonRepeatablePartialFits.stream()
                 .collect(groupingBy(
-                        Fit::compressionFactor,
-                        mapping(Fit::subsequence, toUnmodifiableSet())
+                        Fit.Sequential::compressionFactor,
+                        mapping(Fit.Sequential::subsequence, toUnmodifiableSet())
                 ));
 
         return subsequencesByScore.entrySet()
@@ -118,7 +119,7 @@ public interface NumericPattern<T extends Number> {
     }
 
     static <T extends Number> Set<NumericRange<Integer>> splitByMostLikelyPattern(
-            final List<T> sequence
+            @Unsorted final List<T> sequence
     ) {
         if (sequence.isEmpty()) {
             return emptySet();
@@ -182,7 +183,7 @@ public interface NumericPattern<T extends Number> {
     }
 
     static <T extends Number> Optional<? extends Pair<List<T>, List<Integer>>> findTheRepeatableSubsequenceWithTheLongestFittingRepetitionStartingFromLeft(
-            final List<T> sequence,
+            @Unsorted final List<T> sequence,
             final Collection<List<T>> possibleRepeatableSubsequences
     ) {
         return possibleRepeatableSubsequences.stream()
@@ -203,7 +204,7 @@ public interface NumericPattern<T extends Number> {
     }
 
     static <T extends Number> List<? extends Pair<List<T>, List<Integer>>> findAllFittingRepeatableSubsequencesWithTheirRepetitions(
-            final List<T> sequence,
+            @Unsorted final List<T> sequence,
             final Collection<List<T>> possibleRepeatableSubsequences
     ) {
         final List<? extends Pair<List<T>, List<Integer>>> longestFittingPairsForAllSubsequences = IntStream.range(0, sequence.size())
@@ -231,7 +232,7 @@ public interface NumericPattern<T extends Number> {
     }
 
     static <T extends Number> Set<List<T>> filterRepeatedSubsequences(
-            final Collection<List<T>> sequences
+            @Unsorted final Collection<List<T>> sequences
     ) {
         return sequences.stream()
                 .filter(sequence1 -> sequences.stream()
@@ -242,7 +243,7 @@ public interface NumericPattern<T extends Number> {
     }
 
     static <T extends Number> Set<List<T>> findAllVariations(
-            final List<T> sequence
+            @Unsorted final List<T> sequence
     ) {
         return IntStream.range(0, sequence.size())
                 .mapToObj(i -> IntStream.range(0, sequence.size())
@@ -253,7 +254,7 @@ public interface NumericPattern<T extends Number> {
     }
 
     static <T extends Number> List<T> findBaseVariation(
-            final List<T> sequence
+            @Unsorted final List<T> sequence
     ) {
         final Set<List<T>> allVariations = findAllVariations(sequence);
 
@@ -273,7 +274,7 @@ public interface NumericPattern<T extends Number> {
     }
 
     static <T extends Number> Set<List<T>> findAllPossibleSubsequences(
-            final List<T> sequence
+            @Unsorted final List<T> sequence
     ) {
         return IntStream.range(0, sequence.size())
                 .boxed()
@@ -283,8 +284,8 @@ public interface NumericPattern<T extends Number> {
                 .collect(toUnmodifiableSet());
     }
 
-    static <T extends Number> List<T> findShortestRepeatingSubsequence(
-            final List<T> sequence
+    static <T extends Number> Stream<List<T>> findAllRepeatingSubsequences(
+            @Unsorted final List<T> sequence
     ) {
         return IntStream.range(0, sequence.size())
                 .mapToObj(i -> sequence.subList(0, i + 1))
@@ -293,7 +294,13 @@ public interface NumericPattern<T extends Number> {
                                 sequence.get(i),
                                 subsequence.get(i % subsequence.size())
                         ))
-                )
+                );
+    }
+
+    static <T extends Number> List<T> findShortestRepeatingSubsequence(
+            @Unsorted final List<T> sequence
+    ) {
+        return findAllRepeatingSubsequences(sequence)
                 .findFirst()
                 .orElseGet(Collections::emptyList);
     }
@@ -307,6 +314,32 @@ public interface NumericPattern<T extends Number> {
     boolean isSorted();
 
     List<? extends Pair<T, T>> findAllGaps();
+
+    default List<Long> intervals() {
+        if (sequence().size() <= 1) {
+            return emptyList();
+        }
+
+        return IntStream.range(1, sequence().size())
+                .mapToObj(i -> sequence().get(i).longValue() - sequence().get(i - 1).longValue())
+                .toList();
+    }
+
+    default Set<Long> findDistinctCombinatorialIncrements(
+            final T maxLength
+    ) {
+        if (sequence().size() <= 1) {
+            return emptySet();
+        }
+
+        return IntStream.range(0, sequence().size() - 1)
+                .boxed()
+                .flatMap(i -> IntStream.range(i + 1, sequence().size())
+                        .mapToObj(j -> sequence().get(j).longValue() - sequence().get(i).longValue())
+                        .takeWhile(j -> j <= maxLength.longValue())
+                )
+                .collect(toUnmodifiableSet());
+    }
 
     //boolean canBeCombinedWith(
     //        final NumericPattern<T> other
@@ -344,11 +377,16 @@ public interface NumericPattern<T extends Number> {
         return unsorted(interSequence);
     }
 
-    default NumericPattern<Long> shortestRepeatingCycle() {
+    default Stream<NumericPattern<Long>> allRepeatingCycles() {
         final List<Long> deltas = deltas().sequence();
-        final List<Long> subsequence = findShortestRepeatingSubsequence(deltas);
+        return findAllRepeatingSubsequences(deltas)
+                .map(NumericPattern::unsorted);
+    }
 
-        return unsorted(subsequence);
+    default NumericPattern<Long> shortestRepeatingCycle() {
+        return allRepeatingCycles()
+                .findFirst()
+                .orElseGet(NumericPattern::empty);
     }
 
 }

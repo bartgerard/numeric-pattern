@@ -100,6 +100,47 @@ class NumericPatternSpecification extends Specification {
 
     }
 
+    def "find all repeating cycles"() {
+
+        given:
+        NumericPattern<Integer> pattern = NumericPattern.sorted(sequence)
+
+        when:
+        List<NumericPattern<Long>> allRepeatingCycles = pattern.allRepeatingCycles()
+                .toList()
+
+        then:
+        List<List<Long>> allRepeatingSequences = allRepeatingCycles.stream()
+                .map(cycle -> cycle.sequence())
+                .toList()
+        List<List<Long>> expectedRepeatingSequences = expectedRepeatingCycles.stream()
+                .map(repeatingCycle -> toLongValues(repeatingCycle as Collection<Number>))
+                .toList()
+
+        assertThat(allRepeatingSequences).containsExactlyElementsOf(expectedRepeatingSequences)
+
+        where:
+        sequence                        | expectedRepeatingCycles                 | comment
+        []                              | []                                      | ""
+        [0]                             | []                                      | ""
+
+        [0, 1]                          | [[1]]                                   | ""
+        [0, 1, 2]                       | [[1], [1, 1]]                           | ""
+        [0, 1, 2, 3]                    | [[1], [1, 1], [1, 1, 1]]                | ""
+        [0, 1, 2, 3, 4]                 | [[1], [1, 1], [1, 1, 1], [1, 1, 1, 1]]  | ""
+
+        [2, 4]                          | [[2]]                                   | ""
+        [2, 4, 6]                       | [[2], [2, 2]]                           | ""
+
+        [0, 1, 3]                       | [[1, 2]]                                | ""
+        [0, 1, 3, 4]                    | [[1, 2], [1, 2, 1]]                     | ""
+        [0, 1, 3, 4, 6]                 | [[1, 2], [1, 2, 1, 2]]                  | ""
+        [0, 1, 3, 4, 6, 7]              | [[1, 2], [1, 2, 1, 2], [1, 2, 1, 2, 1]] | ""
+
+        [1, 2, 3, 5, 8, 13, 21, 34, 55] | [[1, 1, 2, 3, 5, 8, 13, 21]]            | "Fibonacci sequence"
+
+    }
+
     def "find shortest repeating cycle"() {
 
         given:
@@ -185,26 +226,6 @@ class NumericPatternSpecification extends Specification {
 
     }
 
-    def "find all partial fits"() {
-
-        when:
-        Set<Fit<Integer>> partialFits = NumericPattern.findAllPartialFits(sequence);
-
-        then:
-        assertThat(partialFits).containsExactlyInAnyOrderElementsOf(expectedPartialFits)
-
-        where:
-        sequence     | expectedPartialFits                                                                  | comment
-        []           | []                                                                                   | ""
-        [1]          | []                                                                                   | ""
-        [1, 1]       | [Fit.of([1, 1], [1])]                                                                | ""
-        [1, 1, 1]    | [Fit.of([1, 1, 1], [1]), Fit.of([1, 1], [1])]                                        | ""
-        [1, 2]       | []                                                                                   | ""
-        [1, 2, 1]    | [Fit.of([1, 2, 1], [1, 2])]                                                          | ""
-        [1, 2, 1, 2] | [Fit.of([1, 2, 1, 2], [1, 2]), Fit.of([1, 2, 1], [1, 2]), Fit.of([2, 1, 2], [2, 1])] | ""
-
-    }
-
     def "filter repeating subsequences"() {
 
         when:
@@ -232,27 +253,49 @@ class NumericPatternSpecification extends Specification {
 
     }
 
-    def "find all non repeatable partial fits"() {
+    def "find all partial fits"() {
 
         when:
-        Set<Fit<Integer>> partialFits = NumericPattern.findAllNonRepeatablePartialFits(sequence);
+        Set<Fit.Sequential<Integer>> partialFits = NumericPattern.findAllPartialFits(sequence);
 
         then:
         assertThat(partialFits).containsExactlyInAnyOrderElementsOf(expectedPartialFits)
 
         where:
-        sequence                 | expectedPartialFits                                          | comment
-        []                       | []                                                           | ""
-        [1]                      | []                                                           | ""
-        [1, 1]                   | [Fit.of([1, 1], [1])]                                        | ""
-        [1, 1, 1]                | [Fit.of([1, 1, 1], [1])]                                     | ""
-        [1, 2]                   | []                                                           | ""
-        [1, 2, 1]                | [Fit.of([1, 2, 1], [1, 2])]                                  | ""
-        [1, 2, 1, 2]             | [Fit.of([1, 2, 1, 2], [1, 2])]                               | ""
+        sequence           | expectedPartialFits                                                                                                                                                                         | comment
+        []                 | []                                                                                                                                                                                          | ""
+        [1]                | []                                                                                                                                                                                          | ""
+        [1, 1]             | [Fit.sequential([1, 1], [1])]                                                                                                                                                               | ""
+        [1, 1, 1]          | [Fit.sequential([1, 1, 1], [1]), Fit.sequential([1, 1], [1])]                                                                                                                               | ""
+        [1, 2]             | []                                                                                                                                                                                          | ""
+        [1, 2, 1]          | [Fit.sequential([1, 2, 1], [1, 2])]                                                                                                                                                         | ""
+        [1, 2, 1, 2]       | [Fit.sequential([1, 2, 1, 2], [1, 2]), Fit.sequential([1, 2, 1], [1, 2]), Fit.sequential([2, 1, 2], [2, 1])]                                                                                | ""
 
-        [1, 2, 1, 2, 1, 3]       | [Fit.of([1, 2, 1, 2, 1], [1, 2])]                            | ""
-        [1, 2, 1, 2, 1, 3, 4]    | [Fit.of([1, 2, 1, 2, 1], [1, 2])]                            | ""
-        [1, 2, 1, 2, 1, 3, 4, 3] | [Fit.of([1, 2, 1, 2, 1], [1, 2]), Fit.of([3, 4, 3], [3, 4])] | ""
+        [1, 2, 1, 2, 1, 3] | [Fit.sequential([1, 2, 1, 2], [1, 2]), Fit.sequential([1, 2, 1, 2, 1], [1, 2]), Fit.sequential([2, 1, 2, 1], [2, 1]), Fit.sequential([2, 1, 2], [2, 1]), Fit.sequential([1, 2, 1], [1, 2])] | ""
+
+    }
+
+    def "find all non repeatable partial fits"() {
+
+        when:
+        Set<Fit.Sequential<Integer>> partialFits = NumericPattern.findAllNonRepeatablePartialFits(sequence);
+
+        then:
+        assertThat(partialFits).containsExactlyInAnyOrderElementsOf(expectedPartialFits)
+
+        where:
+        sequence                 | expectedPartialFits                                                          | comment
+        []                       | []                                                                           | ""
+        [1]                      | []                                                                           | ""
+        [1, 1]                   | [Fit.sequential([1, 1], [1])]                                                | ""
+        [1, 1, 1]                | [Fit.sequential([1, 1, 1], [1])]                                             | ""
+        [1, 2]                   | []                                                                           | ""
+        [1, 2, 1]                | [Fit.sequential([1, 2, 1], [1, 2])]                                          | ""
+        [1, 2, 1, 2]             | [Fit.sequential([1, 2, 1, 2], [1, 2])]                                       | ""
+
+        [1, 2, 1, 2, 1, 3]       | [Fit.sequential([1, 2, 1, 2, 1], [1, 2])]                                    | ""
+        [1, 2, 1, 2, 1, 3, 4]    | [Fit.sequential([1, 2, 1, 2, 1], [1, 2])]                                    | ""
+        [1, 2, 1, 2, 1, 3, 4, 3] | [Fit.sequential([1, 2, 1, 2, 1], [1, 2]), Fit.sequential([3, 4, 3], [3, 4])] | ""
 
     }
 
@@ -420,6 +463,73 @@ class NumericPatternSpecification extends Specification {
         [1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2]                   | [range(0, 8), range(9, 17)]               | ""
         [1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2] | [range(0, 11), range(12, 23)]             | ""
         [1, 2, 1, 1, 2, 1, 1, 2, 1, 0, 2, 1, 2, 2, 1, 2, 2, 1, 2]                | [range(0, 8), range1(9), range(10, 18)]   | ""
+
+    }
+
+    def "split deviating increments"() {
+
+        given:
+        final SortedNumericPattern pattern = NumericPattern.sorted(indices)
+
+        when:
+        final List<List<Long>> groups = pattern.splitDeviatingIncrements(increment)
+
+        then:
+        assertThat(groups).containsExactlyElementsOf(expectedGroups)
+
+        where:
+        indices         | increment | expectedGroups          | comment
+        [0]             | 1         | [[0]]                   | ""
+        [0, 1]          | 1         | [[0, 1]]                | ""
+        [0, 1, 2]       | 1         | [[0, 1, 2]]             | ""
+        [0, 1, 2, 3]    | 1         | [[0, 1, 2, 3]]          | ""
+
+        [0]             | 2         | [[0]]                   | ""
+        [0, 1]          | 2         | [[0], [1]]              | ""
+        [0, 1, 2]       | 2         | [[0], [1], [2]]         | ""
+        [0, 1, 2, 3]    | 2         | [[0], [1], [2], [3]]    | ""
+
+        [0, 2]          | 2         | [[0, 2]]                | ""
+        [0, 2, 4]       | 2         | [[0, 2, 4]]             | ""
+        [0, 2, 4, 6]    | 2         | [[0, 2, 4, 6]]          | ""
+        [0, 2, 3]       | 2         | [[0, 2], [3]]           | ""
+        [0, 2, 3, 5]    | 2         | [[0, 2], [3, 5]]        | ""
+        [0, 2, 3, 4]    | 2         | [[0, 2], [3], [4]]      | ""
+        [0, 2, 3, 4, 5] | 2         | [[0, 2], [3], [4], [5]] | ""
+        [0, 2, 3, 4, 6] | 2         | [[0, 2], [3], [4, 6]]   | ""
+
+    }
+
+    def "group common increments"() {
+
+        given:
+        final NumericPattern<Integer> pattern = NumericPattern.sorted(indices)
+
+        when:
+        final Set<? extends Fit<Integer>> groups = pattern.groupCommonIncrements(maxCycleLength)
+
+        then:
+        assertThat(groups).containsExactlyInAnyOrderElementsOf(expectedGroups)
+
+        where:
+        indices                     | maxCycleLength | expectedGroups                                                                                                      | comment
+        [0, 1]                      | 0              | [Fit.none([0, 1])]                                                                                                  | ""
+        [0, 1]                      | 1              | [Fit.incremental([0, 1], 1)]                                                                                        | ""
+        [0, 1]                      | 4              | [Fit.incremental([0, 1], 1)]                                                                                        | ""
+
+        [0, 1, 3]                   | 1              | [Fit.incremental([0, 1], 1), Fit.none([3])]                                                                         | ""
+        [-2, 0, 1, 3]               | 1              | [Fit.incremental([0, 1], 1), Fit.none([-2, 3])]                                                                     | ""
+        [-1, 0, 1, 3]               | 1              | [Fit.incremental([-1, 0, 1], 1), Fit.none([3])]                                                                     | ""
+
+        [0, 5, 10, 15, 20]          | 4              | [Fit.none([0, 5, 10, 15, 20])]                                                                                      | ""
+        [0, 5, 10, 15, 20]          | 5              | [Fit.incremental([0, 5, 10, 15, 20], 5)]                                                                            | ""
+
+        [0, 1, 3, 5, 7]             | 4              | [Fit.incremental([0, 1], 1), Fit.incremental([3, 5, 7], 2)]                                                         | ""
+        [0, 1, 3, 5, 7, 8]          | 4              | [Fit.incremental([0, 1], 1), Fit.incremental([3, 5], 2), Fit.incremental([7, 8], 1)]                                | ""
+        [0, 1, 3, 5, 8]             | 4              | [Fit.incremental([0, 1], 1), Fit.incremental([3, 5], 2), Fit.none([8])]                                             | ""
+        [0, 1, 3, 5, 8, 11]         | 4              | [Fit.incremental([0, 1], 1), Fit.incremental([3, 5], 2), Fit.incremental([8, 11], 3)]                               | ""
+        [0, 1, 3, 5, 8, 11, 15]     | 4              | [Fit.incremental([0, 1], 1), Fit.incremental([3, 5], 2), Fit.incremental([8, 11], 3), Fit.none([15])]               | ""
+        [0, 1, 3, 5, 8, 11, 15, 19] | 4              | [Fit.incremental([0, 1], 1), Fit.incremental([3, 5], 2), Fit.incremental([8, 11], 3), Fit.incremental([15, 19], 4)] | ""
 
     }
 

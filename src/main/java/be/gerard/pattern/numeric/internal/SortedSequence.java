@@ -1,15 +1,26 @@
 package be.gerard.pattern.numeric.internal;
 
+import be.gerard.pattern.numeric.Fit;
 import be.gerard.pattern.numeric.NumericPattern;
 import be.gerard.pattern.numeric.SortedNumericPattern;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.partitioningBy;
+import static java.util.stream.Collectors.toUnmodifiableList;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
 public record SortedSequence<T extends Number>(
@@ -75,6 +86,92 @@ public record SortedSequence<T extends Number>(
                         .sum()
                 )
                 .anyMatch(sum -> startOfRepetition + sum == number.longValue());
+    }
+
+    @Override
+    public List<List<T>> splitDeviatingIncrements(
+            final Number increment
+    ) {
+        final int[] innerDeviatingIndices = IntStream.range(1, sequence.size())
+                .filter(i -> sequence.get(i).longValue() - sequence.get(i - 1).longValue() != increment.longValue())
+                .toArray();
+
+        final int[] allDeviatingIndices = IntStream.concat(
+                        IntStream.of(0, sequence.size()),
+                        Arrays.stream(innerDeviatingIndices)
+                )
+                .sorted()
+                .toArray();
+
+        return IntStream.range(1, allDeviatingIndices.length)
+                .mapToObj(i -> sequence.subList(
+                        allDeviatingIndices[i - 1],
+                        allDeviatingIndices[i]
+                ))
+                .toList();
+    }
+
+    @Override
+    public Set<? extends Fit<T>> groupCommonIncrements(T maxIncrement) {
+        final Set<Long> increments = findDistinctCombinatorialIncrements(
+                maxIncrement
+        );
+
+        if (increments.isEmpty()) {
+            return Set.of(Fit.none(sequence));
+        }
+
+        final long smallestIncrement = Collections.min(increments); // Prefer simple patterns
+
+        final Map<Long, SortedNumericPattern<T>> indicesByCommonRemainder = sequence.stream()
+                .collect(groupingBy(
+                        index -> index.longValue() % smallestIncrement,
+                        collectingAndThen(
+                                toUnmodifiableSet(),
+                                NumericPattern::sorted
+                        )
+                ));
+
+        final List<List<T>> groups = indicesByCommonRemainder.values()
+                .stream()
+                .map(pattern -> pattern.splitDeviatingIncrements(smallestIncrement))
+                .flatMap(Collection::stream)
+                .toList();
+
+        final Map<Boolean, List<List<T>>> groupedByCompliance = groups.stream()
+                .collect(partitioningBy(
+                        group -> group.size() > 1,
+                        toUnmodifiableList()
+                ));
+
+        if (groupedByCompliance.get(true).isEmpty()) {
+            return Set.of(Fit.none(sequence));
+        }
+
+        final Set<? extends Fit<T>> fits = groupedByCompliance.get(true)
+                .stream()
+                .map(group -> Fit.incremental(
+                        group,
+                        smallestIncrement
+                ))
+                .collect(toUnmodifiableSet());
+
+        if (groupedByCompliance.get(false).isEmpty()) {
+            return fits;
+        }
+
+        final List<T> deviations = groupedByCompliance.get(false)
+                .stream()
+                .map(group -> group.get(0))
+                .toList();
+
+        return Stream.concat(
+                        fits.stream(),
+                        NumericPattern.sorted(deviations)
+                                .groupCommonIncrements(maxIncrement)
+                                .stream()
+                )
+                .collect(toUnmodifiableSet());
     }
 
     public T min() {

@@ -8,6 +8,7 @@ import java.util.stream.IntStream;
 
 import static java.util.Collections.emptyList;
 
+@Unsorted
 public interface UnsortedNumericPattern<T extends Number> extends NumericPattern<T> {
 
     @Override
