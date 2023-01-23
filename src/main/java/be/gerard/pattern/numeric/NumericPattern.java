@@ -315,26 +315,38 @@ public interface NumericPattern<T extends Number> {
 
     List<? extends Pair<T, T>> findAllGaps();
 
+    default int size() {
+        return sequence().size();
+    }
+
+    default T first() {
+        return sequence().get(0);
+    }
+
+    default T last() {
+        return sequence().get(size() - 1);
+    }
+
     default List<Long> intervals() {
-        if (sequence().size() <= 1) {
+        if (size() <= 1) {
             return emptyList();
         }
 
-        return IntStream.range(1, sequence().size())
+        return IntStream.range(1, size())
                 .mapToObj(i -> sequence().get(i).longValue() - sequence().get(i - 1).longValue())
                 .toList();
     }
 
     default Set<Long> findDistinctCombinatorialIncrements(
-            final T maxLength
+            final Number maxLength
     ) {
-        if (sequence().size() <= 1) {
+        if (size() <= 1) {
             return emptySet();
         }
 
-        return IntStream.range(0, sequence().size() - 1)
+        return IntStream.range(0, size() - 1)
                 .boxed()
-                .flatMap(i -> IntStream.range(i + 1, sequence().size())
+                .flatMap(i -> IntStream.range(i + 1, size())
                         .mapToObj(j -> sequence().get(j).longValue() - sequence().get(i).longValue())
                         .takeWhile(j -> j <= maxLength.longValue())
                 )
@@ -348,7 +360,7 @@ public interface NumericPattern<T extends Number> {
     default boolean startsWithSameSubsequence(
             final NumericPattern<T> other
     ) {
-        return IntStream.range(0, Math.min(this.sequence().size(), other.sequence().size()))
+        return IntStream.range(0, Math.min(this.size(), other.size()))
                 .allMatch(i -> Objects.equals(
                         this.sequence().get(i),
                         other.sequence().get(i)
@@ -358,19 +370,19 @@ public interface NumericPattern<T extends Number> {
     default boolean endsWithSameSubsequence(
             final NumericPattern<T> other
     ) {
-        return IntStream.rangeClosed(1, Math.min(this.sequence().size(), other.sequence().size()))
+        return IntStream.rangeClosed(1, Math.min(this.size(), other.size()))
                 .allMatch(i -> Objects.equals(
-                        this.sequence().get(this.sequence().size() - i),
-                        other.sequence().get(other.sequence().size() - i)
+                        this.sequence().get(this.size() - i),
+                        other.sequence().get(other.size() - i)
                 ));
     }
 
     default NumericPattern<Long> deltas() {
-        if (sequence().size() <= 1) {
+        if (size() <= 1) {
             return empty();
         }
 
-        final List<Long> interSequence = IntStream.range(1, sequence().size())
+        final List<Long> interSequence = IntStream.range(1, size())
                 .mapToObj(i -> sequence().get(i).longValue() - sequence().get(i - 1).longValue())
                 .toList();
 

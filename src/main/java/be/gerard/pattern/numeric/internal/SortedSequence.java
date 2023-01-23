@@ -13,9 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.partitioningBy;
@@ -80,7 +82,7 @@ public record SortedSequence<T extends Number>(
         final long offsetForReachableCycle = number.longValue() / cycleLength - 1;
         final long startOfRepetition = offsetForReachableCycle * cycleLength + min().longValue();
 
-        return IntStream.rangeClosed(0, shortestRepeatingCycle.sequence().size())
+        return IntStream.rangeClosed(0, shortestRepeatingCycle.size())
                 .mapToLong(i -> IntStream.range(0, i)
                         .mapToLong(j -> shortestRepeatingCycle.sequence().get(j))
                         .sum()
@@ -112,7 +114,7 @@ public record SortedSequence<T extends Number>(
     }
 
     @Override
-    public Set<? extends Fit<T>> groupCommonIncrements(T maxIncrement) {
+    public Set<Fit<T>> groupCommonIncrements(final Number maxIncrement) {
         final Set<Long> increments = findDistinctCombinatorialIncrements(
                 maxIncrement
         );
@@ -148,7 +150,7 @@ public record SortedSequence<T extends Number>(
             return Set.of(Fit.none(sequence));
         }
 
-        final Set<? extends Fit<T>> fits = groupedByCompliance.get(true)
+        final Set<Fit<T>> fits = groupedByCompliance.get(true)
                 .stream()
                 .map(group -> Fit.incremental(
                         group,
@@ -169,6 +171,61 @@ public record SortedSequence<T extends Number>(
                         fits.stream(),
                         NumericPattern.sorted(deviations)
                                 .groupCommonIncrements(maxIncrement)
+                                .stream()
+                )
+                .collect(toUnmodifiableSet());
+    }
+
+    @Override
+    public Set<Fit<T>> groupCycles(
+            final Number patternLength
+    ) {
+        return LongStream.range(1, patternLength.longValue())
+                .filter(cycleLength -> patternLength.longValue() % cycleLength == 0)
+                .boxed()
+                .map(cycleLength -> groupByCycleLength(
+                        patternLength,
+                        cycleLength
+                ))
+                .filter(not(Set::isEmpty))
+                .findFirst()
+                .orElseGet(() -> Set.of(Fit.none(sequence)));
+    }
+
+    private Set<Fit<T>> groupByCycleLength(
+            final Number patternLength,
+            final Long cycleLength
+    ) {
+        final Map<Long, List<T>> groups = sequence.stream()
+                .collect(groupingBy(
+                        i -> i.longValue() % cycleLength,
+                        toUnmodifiableList()
+                ));
+        final Map<Boolean, List<List<T>>> sequencesByCycleWorthiness = groups.values()
+                .stream()
+                .collect(partitioningBy(
+                        group -> group.size() * cycleLength == patternLength.longValue()
+                ));
+
+        if (sequencesByCycleWorthiness.get(true).isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        return Stream.concat(
+                        sequencesByCycleWorthiness.get(true)
+                                .stream()
+                                .map(group -> Fit.incremental(
+                                        group,
+                                        cycleLength
+                                )),
+                        sequencesByCycleWorthiness.get(false)
+                                .stream()
+                                .flatMap(List::stream)
+                                .collect(collectingAndThen(
+                                        toUnmodifiableList(),
+                                        NumericPattern::sorted
+                                ))
+                                .groupCycles(patternLength)
                                 .stream()
                 )
                 .collect(toUnmodifiableSet());

@@ -18,11 +18,11 @@ public interface UnsortedNumericPattern<T extends Number> extends NumericPattern
 
     @Override
     default List<? extends Pair<T, T>> findAllGaps() {
-        if (sequence().size() <= 1) {
+        if (size() <= 1) {
             return emptyList();
         }
 
-        return IntStream.range(1, sequence().size())
+        return IntStream.range(1, size())
                 .filter(i -> Math.abs(sequence().get(i).longValue() - sequence().get(i - 1).longValue()) != 1)
                 .mapToObj(i -> ImmutablePair.of(
                         sequence().get(i - 1),

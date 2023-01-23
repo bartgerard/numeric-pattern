@@ -30,13 +30,23 @@ public record EmptySequence<T extends Number>() implements SortedNumericPattern<
     }
 
     @Override
-    public List<List<T>> splitDeviatingIncrements(final Number increment) {
+    public List<List<T>> splitDeviatingIncrements(
+            final Number increment
+    ) {
         return emptyList();
     }
 
     @Override
-    public Set<? extends Fit<T>> groupCommonIncrements(T maxIncrement) {
+    public Set<Fit<T>> groupCommonIncrements(
+            final Number maxIncrement
+    ) {
         return emptySet();
     }
 
+    @Override
+    public Set<Fit<T>> groupCycles(
+            final Number patternLength
+    ) {
+        return emptySet();
+    }
 }

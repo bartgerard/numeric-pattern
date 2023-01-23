@@ -23,5 +23,7 @@ public interface SortedNumericPattern<T extends Number> extends NumericPattern<T
 
     List<List<T>> splitDeviatingIncrements(Number increment);
 
-    Set<? extends Fit<T>> groupCommonIncrements(T maxIncrement);
+    Set<Fit<T>> groupCommonIncrements(Number maxIncrement);
+
+    Set<Fit<T>> groupCycles(Number patternLength);
 }

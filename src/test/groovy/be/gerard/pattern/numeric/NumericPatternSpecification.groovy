@@ -533,5 +533,41 @@ class NumericPatternSpecification extends Specification {
 
     }
 
+    def "group cycles"() {
+
+        given:
+        final NumericPattern<Integer> pattern = NumericPattern.sorted(indices)
+
+        when:
+        final Set<? extends Fit<Integer>> groups = pattern.groupCycles(patternLength)
+
+        then:
+        assertThat(groups).containsExactlyInAnyOrderElementsOf(expectedGroups)
+
+        where:
+        indices                                | patternLength | expectedGroups                                                        | comment
+        [0, 1]                                 | 0             | [Fit.none([0, 1])]                                                    | ""
+        [0, 1]                                 | 1             | [Fit.none([0, 1])]                                                    | ""
+        [0, 1]                                 | 2             | [Fit.incremental([0, 1], 1)]                                          | ""
+        [0, 1]                                 | 4             | [Fit.none([0, 1])]                                                    | ""
+
+        [0, 2]                                 | 4             | [Fit.incremental([0, 2], 2)]                                          | ""
+        [0, 1, 2]                              | 4             | [Fit.incremental([0, 2], 2), Fit.none([1])]                           | ""
+        [0, 2, 3]                              | 4             | [Fit.incremental([0, 2], 2), Fit.none([3])]                           | ""
+        [0, 1, 2, 3]                           | 4             | [Fit.incremental([0, 1, 2, 3], 1)]                                    | ""
+
+        [0, 3, 6, 9]                           | 12            | [Fit.incremental([0, 3, 6, 9], 3)]                                    | ""
+        [0, 4, 8]                              | 12            | [Fit.incremental([0, 4, 8], 4)]                                       | ""
+        [0, 3, 4, 6, 8, 9]                     | 12            | [Fit.incremental([0, 3, 6, 9], 3), Fit.none([4, 8])]                  | ""
+        [0, 1, 3, 4, 6, 7, 9, 10]              | 12            | [Fit.incremental([0, 3, 6, 9], 3), Fit.incremental([1, 4, 7, 10], 3)] | ""
+        [0, 2, 3, 5, 6, 8, 9, 11]              | 12            | [Fit.incremental([0, 3, 6, 9], 3), Fit.incremental([2, 5, 8, 11], 3)] | ""
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] | 12            | [Fit.incremental([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], 1)]          | ""
+
+        [0, 1, 3, 6, 7, 9]                     | 12            | [Fit.incremental([0, 3, 6, 9], 3), Fit.incremental([1, 7], 6)]        | ""
+        [0, 2, 3, 6, 8, 9]                     | 12            | [Fit.incremental([0, 3, 6, 9], 3), Fit.incremental([2, 8], 6)]        | ""
+
+
+    }
+
 
 }
