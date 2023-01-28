@@ -25,11 +25,11 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
-public record SortedSequence<T extends Number>(
+public record SequenceSorted<T extends Number>(
         List<T> sequence
 ) implements SortedNumericPattern<T> {
 
-    public static <T extends Number> SortedSequence<T> of(
+    public static <T extends Number> SequenceSorted<T> of(
             final Collection<T> sequence
     ) {
         notEmpty(sequence);
@@ -39,7 +39,7 @@ public record SortedSequence<T extends Number>(
                 .sorted()
                 .toList();
 
-        return new SortedSequence<>(sortedSequence);
+        return new SequenceSorted<>(sortedSequence);
     }
 
     public T max() {
@@ -180,7 +180,7 @@ public record SortedSequence<T extends Number>(
     public Set<Fit<T>> groupCycles(
             final Number patternLength
     ) {
-        return LongStream.range(1, patternLength.longValue())
+        return LongStream.range(1, patternLength.longValue() / 2 + 1)
                 .filter(cycleLength -> patternLength.longValue() % cycleLength == 0)
                 .boxed()
                 .map(cycleLength -> groupByCycleLength(

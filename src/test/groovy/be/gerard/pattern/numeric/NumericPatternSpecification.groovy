@@ -10,7 +10,7 @@ import static be.gerard.pattern.numeric.NumericPatternTestUtils.range
 import static be.gerard.pattern.numeric.NumericPatternTestUtils.range1
 import static org.assertj.core.api.Assertions.assertThat
 
-@Title("NumericPattern Tests")
+@Title("NumericPattern")
 class NumericPatternSpecification extends Specification {
 
     def "compare start and end subsequences"() {
@@ -551,6 +551,8 @@ class NumericPatternSpecification extends Specification {
         [0, 1]                                 | 2             | [Fit.incremental([0, 1], 1)]                                          | ""
         [0, 1]                                 | 4             | [Fit.none([0, 1])]                                                    | ""
 
+        [0, 1]                                 | 0             | [Fit.none([0, 1])]                                                    | ""
+
         [0, 2]                                 | 4             | [Fit.incremental([0, 2], 2)]                                          | ""
         [0, 1, 2]                              | 4             | [Fit.incremental([0, 2], 2), Fit.none([1])]                           | ""
         [0, 2, 3]                              | 4             | [Fit.incremental([0, 2], 2), Fit.none([3])]                           | ""
@@ -565,6 +567,8 @@ class NumericPatternSpecification extends Specification {
 
         [0, 1, 3, 6, 7, 9]                     | 12            | [Fit.incremental([0, 3, 6, 9], 3), Fit.incremental([1, 7], 6)]        | ""
         [0, 2, 3, 6, 8, 9]                     | 12            | [Fit.incremental([0, 3, 6, 9], 3), Fit.incremental([2, 8], 6)]        | ""
+        [0, 3, 4, 6, 9, 10]                    | 12            | [Fit.incremental([0, 3, 6, 9], 3), Fit.incremental([4, 10], 6)]       | ""
+        [0, 3, 5, 6, 9, 11]                    | 12            | [Fit.incremental([0, 3, 6, 9], 3), Fit.incremental([5, 11], 6)]       | ""
 
 
     }

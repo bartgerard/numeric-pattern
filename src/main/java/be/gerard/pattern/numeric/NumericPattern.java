@@ -1,8 +1,8 @@
 package be.gerard.pattern.numeric;
 
-import be.gerard.pattern.numeric.internal.EmptySequence;
-import be.gerard.pattern.numeric.internal.SortedSequence;
-import be.gerard.pattern.numeric.internal.UnsortedSequence;
+import be.gerard.pattern.numeric.internal.SequenceEmpty;
+import be.gerard.pattern.numeric.internal.SequenceSorted;
+import be.gerard.pattern.numeric.internal.SequenceUnsorted;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -40,11 +40,11 @@ public interface NumericPattern<T extends Number> {
             return empty();
         }
 
-        return SortedSequence.of(sequence);
+        return SequenceSorted.of(sequence);
     }
 
     static <T extends Number> SortedNumericPattern<T> empty() {
-        return new EmptySequence<>();
+        return new SequenceEmpty<>();
     }
 
     static <T extends Number> NumericPattern<T> unsorted(
@@ -54,7 +54,7 @@ public interface NumericPattern<T extends Number> {
             return empty();
         }
 
-        return UnsortedSequence.of(sequence);
+        return SequenceUnsorted.of(sequence);
     }
 
     static <T extends Number> Set<Fit.Sequential<T>> findAllPartialFits(

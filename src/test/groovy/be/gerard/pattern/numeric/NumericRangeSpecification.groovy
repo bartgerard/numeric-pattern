@@ -8,7 +8,7 @@ import static be.gerard.pattern.numeric.NumericPatternTestUtils.range
 import static be.gerard.pattern.numeric.NumericPatternTestUtils.range1
 import static org.assertj.core.api.Assertions.assertThat
 
-@Title("NumericRange Tests")
+@Title("NumericRange")
 class NumericRangeSpecification extends Specification {
 
     def "group subsequent numbers"() {

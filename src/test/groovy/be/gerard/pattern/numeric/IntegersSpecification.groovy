@@ -4,7 +4,7 @@ package be.gerard.pattern.numeric
 import spock.lang.Specification
 import spock.lang.Title
 
-@Title("Integers Tests")
+@Title("Integers")
 class IntegersSpecification extends Specification {
 
     def "calculate the least common multiple"() {

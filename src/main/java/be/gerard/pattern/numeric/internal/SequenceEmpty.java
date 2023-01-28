@@ -10,7 +10,7 @@ import java.util.Set;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
-public record EmptySequence<T extends Number>() implements SortedNumericPattern<T> {
+public record SequenceEmpty<T extends Number>() implements SortedNumericPattern<T> {
 
     @Override
     public List<T> sequence() {
