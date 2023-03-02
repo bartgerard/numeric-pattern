@@ -1,11 +1,14 @@
 package be.gerard.pattern.numeric;
 
+import be.gerard.pattern.numeric.internal.SequenceEmpty;
+import be.gerard.pattern.numeric.internal.SequenceSorted;
+
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
 @Sorted
-public interface SortedNumericPattern<T extends Number> extends NumericPattern<T> {
+public sealed interface SortedNumericPattern<T extends Number> extends NumericPattern<T> permits SequenceEmpty, SequenceSorted {
 
     static <T extends Number> boolean isSorted(
             final List<T> sequence

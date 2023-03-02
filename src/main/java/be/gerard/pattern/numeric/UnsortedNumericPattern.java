@@ -1,5 +1,6 @@
 package be.gerard.pattern.numeric;
 
+import be.gerard.pattern.numeric.internal.SequenceUnsorted;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -9,7 +10,7 @@ import java.util.stream.IntStream;
 import static java.util.Collections.emptyList;
 
 @Unsorted
-public interface UnsortedNumericPattern<T extends Number> extends NumericPattern<T> {
+public sealed interface UnsortedNumericPattern<T extends Number> extends NumericPattern<T> permits SequenceUnsorted {
 
     @Override
     default boolean isSorted() {

@@ -7,7 +7,7 @@ import static java.util.Collections.indexOfSubList;
 import static org.apache.commons.lang3.Validate.isTrue;
 import static org.apache.commons.lang3.Validate.notEmpty;
 
-public interface Fit<T extends Number> {
+public sealed interface Fit<T extends Number> permits Fit.Sequential, Fit.Incremental, Fit.None {
 
     static <T extends Number> Sequential<T> sequential(
             @Unsorted final List<T> sequence,
