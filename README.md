@@ -1,2 +1,3 @@
-# numeric-patterns
-Numeric Patterns
+# numeric-pattern
+
+Numeric Pattern
