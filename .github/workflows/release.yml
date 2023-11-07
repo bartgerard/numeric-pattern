@@ -32,8 +32,17 @@ jobs:
           server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
           settings-path: ${{ github.workspace }} # location for the settings.xml file
 
+      # https://maurocanuto.medium.com/using-github-private-packages-and-maven-in-github-actions-c9e2ea69e2bc
+      - name: maven-settings
+        uses: s4u/maven-settings-action@v2
+        with:
+          servers: '[{"id": "github", "username": "dummy", "password": "${GITHUB_TOKEN_REF}"}]'
+          githubServer: false
+
       - name: Set version to ${{ github.event.inputs.version }}
         run: mvn --batch-mode -e clean versions:set -DnewVersion=${{ github.event.inputs.version }} versions:commit
+        env:
+          GITHUB_TOKEN_REF: ${{ secrets.PRIVATE_GITHUB_TOKEN }}
 
       - name: Build with Maven
         run: mvn -B package --file pom.xml

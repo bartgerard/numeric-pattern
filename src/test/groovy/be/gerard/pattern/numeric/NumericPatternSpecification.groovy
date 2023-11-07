@@ -570,7 +570,6 @@ class NumericPatternSpecification extends Specification {
         [0, 3, 4, 6, 9, 10]                    | 12            | [Fit.incremental([0, 3, 6, 9], 3), Fit.incremental([4, 10], 6)]       | ""
         [0, 3, 5, 6, 9, 11]                    | 12            | [Fit.incremental([0, 3, 6, 9], 3), Fit.incremental([5, 11], 6)]       | ""
 
-
     }
 
 
